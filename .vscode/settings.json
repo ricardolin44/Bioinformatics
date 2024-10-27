@@ -1,0 +1,6 @@
+{
+    "editor.indentSize": "tabSize",
+    "editor.detectIndentation": false,
+    "jupyter.interactiveWindow.splitRunFileIntoCells": true,
+    "jupyter.interactiveWindow.textEditor.autoMoveToNextCell": true
+}

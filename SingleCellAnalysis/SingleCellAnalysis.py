@@ -37,7 +37,10 @@ sc.tl.rank_genes_groups(scdr, groupby='leiden', method='wilcoxon')
 marker_genes = scdr.uns['rank_genes_groups']
 groups = marker_genes['names'].dtype.names  # Cluster names
 # Create a DataFrame from all ranked marker genes, including cluster labels
-markers_df = pd.DataFrame({'cluster': [group for group in groups for _ in range(len(marker_genes['names'][group]))],'gene': [gene for group in groups for gene in marker_genes['names'][group]]})
+markers_df = pd.DataFrame({
+    'cluster': [group for group in groups for _ in range(len(marker_genes['names'][group]))],
+    'gene': [gene for group in groups for gene in marker_genes['names'][group]]
+    })
 # Get top 2 markers for each cluster
 top_markers = markers_df.groupby('cluster').head(2)
 

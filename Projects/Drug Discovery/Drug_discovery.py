@@ -6,7 +6,7 @@ from chembl_webresource_client.new_client import new_client
 
 def lipinski(smiles, verbose=False):
     moldata = []
-    for elem in smiles:
+    for elem in smiles: 
         mol = Chem.MolFromSmiles(elem)
         moldata.append(mol)
     baseData = np.arange(1,1)
@@ -17,38 +17,30 @@ def lipinski(smiles, verbose=False):
         desc_NumHDonors = Lipinski.NumHDonors(mol)
         desc_NumHAcceptors = Lipinski.NumHAcceptors(mol)
 
-        row =np.array([desc_MolWt,
-                       desc_MolLogP,
-                       desc_NumHDonors,
-                       desc_NumHAcceptors])
-        if (i==0):
-            baseData = row
-        else:
-            baseData = np.vstack([baseData, row])
+        row =np.array([desc_MolWt, desc_MolLogP, desc_NumHDonors, desc_NumHAcceptors])
+        baseData = row if (i==0) else np.vstack([baseData, row])
         i = i+1
-
     columnName = ['MW', 'LogP', 'NumHDonors', 'NumHAcceptors']
-    descriptors = pd.DataFrame(data=baseData, columns=columnName)
-    return descriptors
+    return pd.DataFrame(data=baseData, columns=columnName)
+        
 
 def pIC50(input):
-    pIC50 = []
-    for i in input['standard_value_norm']:
-        pIC50.append(-np.log10(i*10**-9))
+    pIC50 = [-np.log10(i*10**-9) for i in input['standard_value_norm']]
     input['pIC50'] = pIC50
     del input['standard_value_norm']
     # input.drop('standard_value_norm')
     return input
 
+
 def norm_value(input):
-    norm = []
-    for i in input['standard_value']:
-        if float(i)>100000000:
-            i = 100000000
-        norm.append(float(i))
-    input['standard_value_norm'] = norm
-    del input['standard_value']
-    return input
+	norm = []
+	for i in input['standard_value']:
+		if float(i)>100000000:
+			i = 100000000
+		norm.append(float(i))
+	input['standard_value_norm'] = norm
+	del input['standard_value']
+	return input
 
 target = new_client.target
 target_query = target.search('coronavirus')
@@ -66,12 +58,12 @@ df2 = df[df.standard_value.notna()]
 
 bioactivity_class = []
 for i in df2.standard_value:
-    if float(i) >= 10000:
-        bioactivity_class.append('inactive')
-    elif float(i) <= 1000:
-        bioactivity_class.append('active')
-    else:
-        bioactivity_class.append('intermediate')
+	if float(i) >= 10000:
+		bioactivity_class.append('inactive')
+	elif float(i) <= 1000:
+		bioactivity_class.append('active')
+	else:
+		bioactivity_class.append('intermediate')
 
 selection = ['molecule_chembl_id', 'canonical_smiles', 'standard_value']
 df3 = df2[selection]
@@ -123,3 +115,4 @@ model.fit(x_train,y_train)
 r2 = model.score(x_test,y_test)
 
 y_pred = model.predict(x_test)
+
