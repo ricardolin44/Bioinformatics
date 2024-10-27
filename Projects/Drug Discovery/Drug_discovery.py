@@ -95,31 +95,31 @@ df_final = pIC50(df_norm)
 df_final
 
 '''Plotting'''
-# from matplotlib import pyplot as plt
-# import seaborn as sns
-# sns.set(style='ticks')
-# plt.figure(figsize=(5.5,5.5))
-# sns.scatterplot(x='MW', y='pIC50', data=df_final, hue='Bioactivity', size='pIC50', alpha=0.7, edgecolor='black')
-# plt.legend(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0)
-# plt.xlabel('MW',fontweight='bold', fontsize=14)
-# plt.ylabel('pIC50',fontweight='bold', fontsize=14)
-# plt.title('Drug Discovery')
-# plt.show()
+from matplotlib import pyplot as plt
+import seaborn as sns
+sns.set(style='ticks')
+plt.figure(figsize=(5.5,5.5))
+sns.scatterplot(x='MW', y='pIC50', data=df_final, hue='Bioactivity', size='pIC50', alpha=0.7, edgecolor='black')
+plt.legend(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0)
+plt.xlabel('MW',fontweight='bold', fontsize=14)
+plt.ylabel('pIC50',fontweight='bold', fontsize=14)
+plt.title('Drug Discovery')
+plt.show()
 
 '''Model building'''
-# from sklearn.model_selection import train_test_split
-# from sklearn.ensemble import RandomForestRegressor
-# from sklearn.feature_selection import  VarianceThreshold
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.feature_selection import  VarianceThreshold
 
-# x = df_final.drop('pIC50',axis=1)   #can't run since we haven't convert it into descriptors
-# y = df_final.pIC50
-# selection = VarianceThreshold(threshold=(.8*(1-.8)))   #remove low variance variable
-# x = selection.fit_transform(x)
+x = df_final.drop('pIC50',axis=1)   #can't run since we haven't convert it into descriptors
+y = df_final.pIC50
+selection = VarianceThreshold(threshold=(.8*(1-.8)))   #remove low variance variable
+x = selection.fit_transform(x)
 
-# np.random.seed(100)
-# x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.2)
-# model = RandomForestRegressor(n_estimators=100)
-# model.fit(x_train,y_train)
-# r2 = model.score(x_test,y_test)
+np.random.seed(100)
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.2)
+model = RandomForestRegressor(n_estimators=100)
+model.fit(x_train,y_train)
+r2 = model.score(x_test,y_test)
 
-# y_pred = model.predict(x_test)
+y_pred = model.predict(x_test)
