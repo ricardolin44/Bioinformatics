@@ -52,29 +52,31 @@ y_score = firstModel.predict_proba(X_test)
 auc = roc_auc_score(y_test_binarized, y_score, average='macro', multi_class='ovr')
 print("AUC (Macro):", auc)
 
-# model = RandomForestClassifier(random_state=77)
-# param_grid = {
-#     'n_estimators': [200, 250, 300, 350],        # Number of trees in the forest
-#     'max_depth': [None, 2, 5, 10],        # Maximum depth of the tree
-#     'min_samples_split': [2, 3, 4],        # Minimum samples required to split a node
-#     'min_samples_leaf': [1, 2, 3],          # Minimum samples required at each leaf node
-#     'max_features': ['sqrt', 'log2', None]  # Number of features to consider for best split
-# }
-# model = RandomForestClassifier(random_state=77)
-# gridSearchModel = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, scoring='accuracy', n_jobs=-1, verbose=2)
-# gridSearchModel.fit(X_train, y_train)
-# print("Best Parameters:", gridSearchModel.best_params_)
-# print("Best Score:", gridSearchModel.best_score_)
-# best_rf_model = gridSearchModel.best_estimator_
-# y_pred = best_rf_model.predict(X_test)
+# GridSearchで最もいい候補を見つける
+model = RandomForestClassifier(random_state=77)
+param_grid = {
+    'n_estimators': [200, 250, 300, 350],        # Number of trees in the forest
+    'max_depth': [None, 2, 5, 10],        # Maximum depth of the tree
+    'min_samples_split': [2, 3, 4],        # Minimum samples required to split a node
+    'min_samples_leaf': [1, 2, 3],          # Minimum samples required at each leaf node
+    'max_features': ['sqrt', 'log2', None]  # Number of features to consider for best split
+}
+gridSearchModel = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, scoring='roc_auc_ovr', n_jobs=-1, verbose=2)
+gridSearchModel.fit(X_train, y_train)
+print("Best Parameters:", gridSearchModel.best_params_)
+print("Best Score:", gridSearchModel.best_score_)
+best_rf_model = gridSearchModel.best_estimator_
+y_pred = best_rf_model.predict_proba(X_test)
 # accuracy = accuracy_score(y_test, y_pred)
 # print("Test Set Accuracy:", accuracy)
+auc = roc_auc_score(y_test_binarized, y_pred, average='macro', multi_class='ovr')
+print("AUC (Macro):", auc)  
 
 #Sort and select the feature with the most importance rate
 features = X_test.columns
 importance_df = pd.DataFrame({
     'features' : features,
-    'importance' : firstModel.feature_importances_
+    'importance' : best_rf_model.feature_importances_
 })
 importance_df = importance_df.sort_values(by='importance', ascending=False, ignore_index=True)
 importance_df.loc[:50,'importance'].sum()
@@ -82,7 +84,7 @@ importance_df['cumulative_importance'] = \
     importance_df['importance'].cumsum()
 
 # Set the threshold for cumulative importance and extract the top importance until threshold
-threshold = 0.8
+threshold = 0.35
 threshold_index = importance_df[importance_df['cumulative_importance'] > threshold].index[0]
 selected_features = importance_df['features'].iloc[:threshold_index].values
 # print("Current question number: "+len(selected_features))
@@ -91,11 +93,10 @@ selected_features = importance_df['features'].iloc[:threshold_index].values
 X_data_filtered = x_data[selected_features]
 X_train_filtered, X_test_filtered, y_train, y_test = train_test_split(X_data_filtered, y_data, test_size=0.2, random_state=77)
 
-model = RandomForestClassifier(n_estimators=100, 
-    random_state=77)
-model.fit(X_train_filtered, y_train)
-y_pred = model.predict(X_test_filtered)
-accuracy = accuracy_score(y_test, y_pred)
+best_rf_model.fit(X_train_filtered, y_train)
+y_pred_best = best_rf_model.predict_proba(X_test_filtered)
+auc = roc_auc_score(y_test_binarized, y_pred_best, average='macro', multi_class='ovr')
+print("AUC (Macro):", auc)  
 
 # show the importance into plot
 plt.figure(figsize=(12, 6))
