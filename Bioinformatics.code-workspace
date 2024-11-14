@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+    ],
+    "settings": {
+        "macros": {
+            "ExecSelectionAndCursorDown": [
+                "workbench.action.terminal.runSelectedText",
+                "cursorDown"
+            ]
+        }
+    }
+}

@@ -1,11 +1,13 @@
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score,precision_score, recall_score, f1_score
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score,precision_score, recall_score, f1_score, make_scorer
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import label_binarize
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+import numpy as np
 
 # Import File
 # survey_file_terminal = "./Projects/MedicalExamination/data/survey.csv"
@@ -84,19 +86,23 @@ importance_df['cumulative_importance'] = \
     importance_df['importance'].cumsum()
 
 # Set the threshold for cumulative importance and extract the top importance until threshold
-threshold = 0.35
-threshold_index = importance_df[importance_df['cumulative_importance'] > threshold].index[0]
-selected_features = importance_df['features'].iloc[:threshold_index].values
+# threshold = 0.35
+# threshold_index = importance_df[importance_df['cumulative_importance'] > threshold].index[0]
 # print("Current question number: "+len(selected_features))
 
+question_range = range(5, 92)
+auc_scores = []
 # Re set our data and train it into model
-X_data_filtered = x_data[selected_features]
-X_train_filtered, X_test_filtered, y_train, y_test = train_test_split(X_data_filtered, y_data, test_size=0.2, random_state=77)
+for num_features in question_range:
+    selected_features = importance_df['features'].iloc[:num_features].values
 
-best_rf_model.fit(X_train_filtered, y_train)
-y_pred_best = best_rf_model.predict_proba(X_test_filtered)
-auc = roc_auc_score(y_test_binarized, y_pred_best, average='macro', multi_class='ovr')
-print("AUC (Macro):", auc)  
+    X_data_filtered = x_data[selected_features]
+    X_train_filtered, X_test_filtered, y_train, y_test = train_test_split(X_data_filtered, y_data, test_size=0.2, random_state=77)
+
+    best_rf_model.fit(X_train_filtered, y_train)
+    y_pred_best = best_rf_model.predict_proba(X_test_filtered)
+    auc = roc_auc_score(y_test_binarized, y_pred_best, average='macro', multi_class='ovr')
+    auc_scores.append(auc)
 
 # show the importance into plot
 plt.figure(figsize=(12, 6))
@@ -104,4 +110,94 @@ plt.bar(range(len(importance_df)), importance_df["cumulative_importance"]*100)
 plt.xlabel("Data Point")
 plt.ylabel("cumulative_importance")
 plt.title("cumulative_importance of Each Data Point")
+plt.show()
+
+plt.figure(figsize=(10,6))
+plt.plot(question_range, auc_scores, marker='o')
+plt.title("AUC Score vs. Number of Questions")
+plt.xlabel("Number of Questions")
+plt.ylabel("AUC Score (Macro)")
+plt.grid(True)
+plt.show()
+
+# Convert question_range and auc_scores to numpy arrays
+x = np.array(question_range[7:30])
+y = np.array(auc_scores[7:30])
+
+m, b = np.polyfit(x, y, 1)
+y_1streg = m * x + b
+
+# Fit a polynomial regression (2nd degree is usually sufficient for such curves)
+coefficients = np.polyfit(x, y, 2)
+polynomial = np.poly1d(coefficients)
+
+# Generate values for plotting the regression line
+x_reg = np.linspace(x.min(), x.max(), 500)
+y_reg = polynomial(x_reg)
+
+# Find the x value (number of questions) that maximizes the fitted polynomial curve
+optimal_questions = x_reg[np.argmax(y_reg)]
+best_auc = max(y_reg)
+
+# Plot the original data and the fitted curve
+plt.figure(figsize=(10, 6))
+plt.plot(x, y, 'o', label="Original Data")
+plt.plot(x, y_1streg, '-', label="Regression Line (Polynomial)")
+plt.axvline(optimal_questions, color='r', linestyle='--', label=f"Optimal Questions: {int(optimal_questions)}")
+plt.title("AUC Score vs. Number of Questions")
+plt.xlabel("Number of Questions")
+plt.ylabel("AUC Score (Macro)")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+print(f"Optimal number of questions for best AUC: {int(optimal_questions)}, Best AUC: {best_auc:.4f}")
+
+
+# Using cross validation
+scoring = make_scorer(roc_auc_score, needs_proba = True, multi_class = "ovr", average ="macro")
+cv_mean_scores = []
+
+question_range = range(5, 92)
+
+cv_scores = cross_val_score(best_rf_model, x_data, y_data, cv=5, scoring=scoring)
+
+print(f"Cross-validated AUC scores: {cv_scores}")
+print(f"Mean AUC: {cv_scores.mean():.3f}")
+print(f"Standard deviation of AUC: {cv_scores.std():.3f}")
+
+for num_features in question_range:
+    selected_features = importance_df['features'].iloc[:num_features].values
+
+    x_data_selected = x_data[selected_features]
+    cv_scores = cross_val_score(best_rf_model, x_data_selected, y_data, cv=5, scoring=scoring)
+    cv_mean_scores.append(cv_scores.mean())
+
+x = np.array(question_range[:30])
+y = np.array(cv_mean_scores[:30])
+
+m, b = np.polyfit(x, y, 1)
+y_1streg = m * x + b
+
+# Fit a polynomial regression (2nd degree is usually sufficient for such curves)
+coefficients = np.polyfit(x, y, 2)
+polynomial = np.poly1d(coefficients)
+
+# Generate values for plotting the regression line
+x_reg = np.linspace(x.min(), x.max(), 500)
+y_reg = polynomial(x_reg)
+
+# Find the x value (number of questions) that maximizes the fitted polynomial curve
+optimal_questions = x_reg[np.argmax(y_reg)]
+best_auc = max(y_reg)
+
+plt.figure(figsize=(10, 6))
+plt.plot(x, y, 'o', label="Original Data")
+plt.plot(x, y_1streg, '-', label="Regression Line (Polynomial)")
+plt.axvline(optimal_questions, color='r', linestyle='--', label=f"Optimal Questions: {int(optimal_questions)}")
+plt.title("AUC Score vs. Number of Questions")
+plt.xlabel("Number of Questions")
+plt.ylabel("AUC Score (Macro)")
+plt.legend()
+plt.grid(True)
 plt.show()
