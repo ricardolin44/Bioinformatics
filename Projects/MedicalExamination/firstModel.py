@@ -28,18 +28,18 @@ X_train, X_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.
 firstModel = RandomForestClassifier(n_estimators=100, random_state=77, n_jobs=-1)
 firstModel.fit(X_train, y_train)
 y_pred = firstModel.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-
-cm = confusion_matrix(y_test, y_pred)
-print("混同行列:\n", cm)
-
+accuracy = accuracy_score(y_test, y_pred, average='macro')
 precision = precision_score(y_test, y_pred, average='macro')
 recall = recall_score(y_test, y_pred, average='macro')
 f1 = f1_score(y_test, y_pred, average='macro')
 
+print("Accuracy:", accuracy)
 print("Precision:", precision)
 print("Recall:", recall)
 print("F1スコア:", f1)
+
+cm = confusion_matrix(y_test, y_pred)
+print("混同行列:\n", cm)
 
 y_test.unique()
 # ラベルのバイナライズ（マルチクラス対応）

@@ -61,6 +61,26 @@ scoring = make_scorer(roc_auc_score, needs_proba = True, multi_class = "ovr", av
 cv_scores = cross_val_score(bestModel, x, y, cv=5, scoring=scoring)
 print("Mean Score of Best Model: ",round(cv_scores.mean(),3))
 
+
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+y_encoded = le.fit_transform(y)
+
+# Accuracy
+scoring = make_scorer(accuracy_score)
+cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
+print("Accuracy:", cv_scores.mean())
+
+# Precision (multi-class support with macro averaging)
+scoring = make_scorer(precision_score, average="macro")
+cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
+print("Precision:", cv_scores.mean())
+
+# F1 Score (multi-class support with macro averaging)
+scoring = make_scorer(f1_score, average="macro")
+cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
+print("F1 Scores:", cv_scores.mean())
+
 #Sort and select the feature with the most importance rate
 features = x.columns
 importance_df = pd.DataFrame({
