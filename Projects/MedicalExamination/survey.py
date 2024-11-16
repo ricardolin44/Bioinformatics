@@ -102,37 +102,6 @@ for num_features in question_range:
     cv_scores = cross_val_score(bestModel, x_selected, y, cv=5, scoring=scoring)
     cv_mean_scores.append(cv_scores.mean())
 
-# x = np.array(question_range)
-# y = np.array(cv_mean_scores)
-
-# m, b = np.polyfit(x, y, 1)
-# y_1streg = m * x + b
-
-# # Fit a polynomial regression (2nd degree is usually sufficient for such curves)
-# coefficients = np.polyfit(x, y, 2)
-# polynomial = np.poly1d(coefficients)
-# # Generate values for plotting the regression line
-# x_reg = np.linspace(x.min(), x.max(), 500)
-# y_reg = polynomial(x_reg)
-# # Find the x value (number of questions) that maximizes the fitted polynomial curve
-# optimal_questions = x_reg[np.argmax(y_reg)]
-# best_auc = max(y_reg)
-
-
-# plt.figure(figsize=(10, 6))
-# plt.plot(x, y, 'o')
-# plt.plot(x_reg, y_reg, '-', label="Regression Line (Polynomial)")
-# plt.axvline(optimal_questions, color='r', linestyle='--', label=f"Optimal Questions: {int(optimal_questions)}")
-# plt.title("AUC Score vs. Number of Questions (Sorted Based on Importance)")
-# plt.xlabel("Number of Questions")
-# plt.ylabel("AUC Score (Macro)")
-# plt.legend()
-# plt.grid(True)
-# plt.show()
-
-# import numpy as np
-# import matplotlib.pyplot as plt
-
 def plot_auc_vs_questions(question_range, auc_scores, type='linear', degree=2, start=0, end=95):
     # Convert question_range and auc_scores to numpy arrays and slice based on input range
     x = np.array(question_range[start:end])
