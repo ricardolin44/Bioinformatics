@@ -23,24 +23,24 @@ y = data.iloc[:,-1].rename("Result")
 # print(data.iloc[:, -2].unique())
 
 # GridSearchで最もいい候補を見つける
-model = RandomForestClassifier(random_state=77)
-param_grid = {
-    'n_estimators': [200, 250, 300, 350],
-    'max_depth': [None, 5, 10, 15],
-    'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 4],
-    'max_features': ['sqrt', 'log2', None],
-    'bootstrap': [True, False],
-    'max_samples': [0.5, 0.75, 1.0],       # Only when bootstrap=True
-    'criterion': ['gini', 'entropy'],
-    'min_impurity_decrease': [0.0, 0.01, 0.1],
-    'class_weight': [None, 'balanced', 'balanced_subsample'],
-    'oob_score': [True, False]              # Only when bootstrap=True
-}
-gridSearchModel = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, scoring='roc_auc_ovr', n_jobs=-1, verbose=2)
-gridSearchModel.fit(x, y)
-print("Best Parameters:", gridSearchModel.best_params_)
-print("Best Score:", gridSearchModel.best_score_)
+# model = RandomForestClassifier(random_state=77)
+# param_grid = {
+#     'n_estimators': [200, 250, 300, 350],
+#     'max_depth': [None, 5, 10, 15],
+#     'min_samples_split': [2, 5, 10],
+#     'min_samples_leaf': [1, 2, 4],
+#     'max_features': ['sqrt', 'log2', None],
+#     'bootstrap': [True, False],
+#     'max_samples': [0.5, 0.75, 1.0],       # Only when bootstrap=True
+#     'criterion': ['gini', 'entropy'],
+#     'min_impurity_decrease': [0.0, 0.01, 0.1],
+#     'class_weight': [None, 'balanced', 'balanced_subsample'],
+#     'oob_score': [True, False]              # Only when bootstrap=True
+# }
+# gridSearchModel = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, scoring='roc_auc_ovr', n_jobs=-1, verbose=2)
+# gridSearchModel.fit(x, y)
+# print("Best Parameters:", gridSearchModel.best_params_)
+# print("Best Score:", gridSearchModel.best_score_)
 
 bestModel = RandomForestClassifier(
     random_state=77, 
@@ -62,24 +62,24 @@ cv_scores = cross_val_score(bestModel, x, y, cv=5, scoring=scoring)
 print("Mean Score of Best Model: ",round(cv_scores.mean(),3))
 
 
-from sklearn.preprocessing import LabelEncoder
-le = LabelEncoder()
-y_encoded = le.fit_transform(y)
+# from sklearn.preprocessing import LabelEncoder
+# le = LabelEncoder()
+# y_encoded = le.fit_transform(y)
 
 # Accuracy
-scoring = make_scorer(accuracy_score)
-cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
-print("Accuracy:", cv_scores.mean())
+# scoring = make_scorer(accuracy_score)
+# cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
+# print("Accuracy:", round(cv_scores.mean(),3))
 
-# Precision (multi-class support with macro averaging)
-scoring = make_scorer(precision_score, average="macro")
-cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
-print("Precision:", cv_scores.mean())
+# # Precision (multi-class support with macro averaging)
+# scoring = make_scorer(precision_score, average="macro")
+# cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
+# print("Precision:", round(cv_scores.mean(),3))
 
-# F1 Score (multi-class support with macro averaging)
-scoring = make_scorer(f1_score, average="macro")
-cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
-print("F1 Scores:", cv_scores.mean())
+# # F1 Score (multi-class support with macro averaging)
+# scoring = make_scorer(f1_score, average="macro")
+# cv_scores = cross_val_score(bestModel, x, y_encoded, cv=5, scoring=scoring)
+# print("F1 Scores:", round(cv_scores.mean(),3))
 
 #Sort and select the feature with the most importance rate
 features = x.columns
@@ -139,6 +139,10 @@ def plot_auc_vs_questions(question_range, auc_scores, type='linear', degree=2, s
     optimal_questions = x_reg[np.argmax(y_poly_reg)]
     best_auc = max(y_poly_reg)
 
+    target_auc = 0.90
+    closest_index = np.argmin(np.abs(y_poly_reg - target_auc))
+    questions_for_90_auc = x_reg[closest_index]
+
     # Linear Regression
     m, b = np.polyfit(x, y, 1)
     y_1streg = m * x + b
@@ -165,6 +169,8 @@ def plot_auc_vs_questions(question_range, auc_scores, type='linear', degree=2, s
     elif (type == 'polynomial') :
         plt.plot(x_reg, y_poly_reg, '-', label=f"Polynomial Regression (Degree {degree})")
         plt.axvline(optimal_questions, color='r', linestyle='--', label=f"Optimal Questions: {int(optimal_questions)}")
+        plt.axvline(questions_for_90_auc, color="r", linestyle="-.", label=f"Questions for 90% AUC: {int(questions_for_90_auc)}")
+        print(f"Number of questions to reach 90% AUC: {questions_for_90_auc:.2f}")
     else:
         plt.plot(x_fit, y_fit, '-', label=f"Exponential Plateau Model: y = {c:.2f} * (1 - e^(-{d:.2f} * x))", color='orange')
     plt.title("AUC Score vs. Number of Questions (Sorted Based on Importance)")
@@ -176,4 +182,6 @@ def plot_auc_vs_questions(question_range, auc_scores, type='linear', degree=2, s
 
     print(f"Optimal number of questions for best AUC: {int(optimal_questions)}, Best AUC: {best_auc:.4f}")
 
-plot_auc_vs_questions(question_range, cv_mean_scores, type='pol', start=4)
+plot_auc_vs_questions(question_range, cv_mean_scores, type='polynomial', degree=5)
+
+print("Top 8 Questions:\n",importance_df["features"][:8])
